@@ -2,6 +2,10 @@ pub mod hello {
     tonic::include_proto!("hello"); // The string specified here must match the proto package name
 }
 
+use tokio::sync::mpsc;
+use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
+use tokio::time::{sleep, Duration};
+
 use tonic::{transport::Server, Request, Response, Status};
 
 // Service Name: Say
@@ -28,6 +32,39 @@ impl Say for MyGreeter {
         };
 
         Ok(Response::new(reply)) // Send back our formatted greeting
+    }
+
+    // Specify the output of rpc call
+    type SendStreamStream = ReceiverStream<Result<SayResponse, Status>>;
+    // implementation for rpc call
+    async fn send_stream(
+        &self,
+        request: Request<SayRequest>,
+    ) -> Result<Response<Self::SendStreamStream>, Status> {
+        println!("/send_stream request = {:?}", request);
+
+        // creating a queue or channel
+        let (mut tx, rx) = mpsc::channel(4);
+
+        // creating a new task
+        tokio::spawn(async move {
+            // looping and sending our response using stream
+            for _ in 0..4 {
+                // fixed size stream
+                // sending response to our channel
+                tx.send(Ok(SayResponse {
+                    response_message: format!("hello"),
+                }))
+                .await
+                .unwrap();
+
+                // Sleep for 1 second
+                sleep(Duration::from_secs(1)).await;
+            }
+            println!(" /// done sending");
+        });
+        // returning our reciever so that tonic can listen on reciever and send the response to client
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 }
 

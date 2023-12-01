@@ -12,8 +12,8 @@ service Say {
     // unary request to server and unary response from server
     rpc Send(SayRequest) returns (SayResponse); // Send is the name of the call
 
-    // // unary request to server and stream response from server
-    // rpc SendStream(SayRequest) returns (stream SayResponse);
+    // unary request to server and stream response from server
+    rpc SendStream(SayRequest) returns (stream SayResponse);
 
     // // stream request to server and unary response from server
     // rpc ReceiveStream(stream SayRequest) returns (SayResponse);
