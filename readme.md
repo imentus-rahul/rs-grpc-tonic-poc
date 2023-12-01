@@ -65,6 +65,9 @@ grpcurl -plaintext -import-path ./proto -proto hello.proto -d '{"name": "Tonic"}
 
 # server stream: unary request to server and stream response from server
 grpcurl -plaintext -import-path ./proto -proto hello.proto -d '{"name": "Tonic"}' '[::1]:50051' hello.Say/SendStream
+
+# server stream: stream request to server and unary response from server
+grpcurl -plaintext -import-path ./proto -proto hello.proto -d '{"name": "Tonic"}' '[::1]:50051' hello.Say/ReceiveStream
 ```
 
 - Using gRPC Client from code: `cargo run --bin server` and `cargo run --bin client` on another terminal

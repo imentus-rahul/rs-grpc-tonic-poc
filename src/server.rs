@@ -3,8 +3,9 @@ pub mod hello {
 }
 
 use tokio::sync::mpsc;
-use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
 use tokio::time::{sleep, Duration};
+use tokio_stream::iter;
+use tokio_stream::{wrappers::ReceiverStream, Stream, StreamExt};
 
 use tonic::{transport::Server, Request, Response, Status};
 
@@ -65,6 +66,33 @@ impl Say for MyGreeter {
         });
         // returning our reciever so that tonic can listen on reciever and send the response to client
         Ok(Response::new(ReceiverStream::new(rx)))
+    }
+
+    // implementation for rpc call
+    async fn receive_stream(
+        &self,
+        request: Request<tonic::Streaming<SayRequest>>,
+    ) -> Result<Response<SayResponse>, Status> {
+        println!("/receive_stream request");
+
+        let mut stream = request.into_inner();
+        let mut res_message = String::from("");
+
+        // while let Some(req) = stream.message().await? {
+        //     res_message.push_str(&format!("Hola {}\n", req.name))
+        // }
+
+        // // returning our reciever so that tonic can listen on reciever and send the response to client
+        // Ok(Response::new(SayResponse { response_message: res_message }))
+
+        while let Some(say_req) = stream.next().await {
+            let say_req = say_req?;
+            println!("  ==> say_req = {:?}", say_req);
+            res_message.push_str(&format!("Hola {}!, ", say_req.name))
+        }
+        Ok(Response::new(SayResponse {
+            response_message: res_message,
+        }))
     }
 }
 
