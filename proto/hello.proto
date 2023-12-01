@@ -18,8 +18,8 @@ service Say {
     // stream request to server and unary response from server
     rpc ReceiveStream(stream SayRequest) returns (SayResponse);
 
-    // // stream request to server and stream response from server
-    // rpc BidirectionalStream(stream SayRequest) returns (stream SayResponse);
+    // stream request to server and stream response from server
+    rpc BidirectionalStream(stream SayRequest) returns (stream SayResponse);
 }
 
 // arguments for the function

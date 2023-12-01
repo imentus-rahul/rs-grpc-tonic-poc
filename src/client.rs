@@ -59,5 +59,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let response = client.receive_stream(request).await?;
     println!("RESPONSE={:?}", response);
 
+    println!("\n*** BIDIRECTIONAL STREAMING ***");
+    let request = tonic::Request::new(async_stream::stream! {
+        let names = vec!["alice", "bob", "charlie"];
+        for name in names {
+            sleep(Duration::from_secs(1)).await;
+            yield SayRequest {
+                name: name.to_string(),
+            };
+        }
+    });
+    let mut response_stream = client.bidirectional_stream(request).await?.into_inner();
+    while let Some(response) = response_stream.message().await? {
+        println!("NOTE={:?}", response);
+    }
+
     Ok(())
 }

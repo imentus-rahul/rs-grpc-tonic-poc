@@ -36,8 +36,8 @@ impl Say for MyGreeter {
     }
 
     // Specify the output of rpc call
-    type SendStreamStream = ReceiverStream<Result<SayResponse, Status>>;
-    // implementation for rpc call
+    type SendStreamStream = ReceiverStream<Result<SayResponse, Status>>; // It is a convention in Rust gRPC to have {method_name}Stream for server-side streaming methods
+                                                                         // implementation for rpc call
     async fn send_stream(
         &self,
         request: Request<SayRequest>,
@@ -93,6 +93,48 @@ impl Say for MyGreeter {
         Ok(Response::new(SayResponse {
             response_message: res_message,
         }))
+    }
+
+    type BidirectionalStreamStream = ReceiverStream<Result<SayResponse, Status>>; // convention in Rust gRPC to have {method_name}StreamStream for bidirectional streaming methods.
+
+    // implementation for rpc call
+    async fn bidirectional_stream(
+        &self,
+        request: Request<tonic::Streaming<SayRequest>>,
+    ) -> Result<Response<Self::BidirectionalStreamStream>, Status> {
+        println!("/bidirectional_stream request");
+
+        let mut stream = request.into_inner();
+
+        // creating a queue or channel
+        let (mut tx, rx) = mpsc::channel(4);
+
+        let mut res_message = String::from("");
+
+        tokio::spawn(async move {
+            while let Some(say_req) = stream.next().await {
+                // let say_req = say_req?;
+                let say_req = match say_req {
+                    Ok(req) => req,
+                    Err(e) => {
+                        eprintln!("Error receiving request: {}", e);
+                        return;
+                    }
+                };
+                println!("  ==> say_req = {:?}", say_req);
+                // send data as soon it is available
+                tx.send(Ok(SayResponse {
+                    response_message: format!("Hola {}", say_req.name),
+                }))
+                .await
+                .unwrap();
+
+                // Sleep for 1 second
+                // sleep(Duration::from_secs(1)).await;
+            }
+        });
+
+        Ok(Response::new(ReceiverStream::new(rx)))
     }
 }
 
