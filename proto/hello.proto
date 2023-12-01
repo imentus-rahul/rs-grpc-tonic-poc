@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// package name for the buffer will be used later
+package hello;
+
+// In Rust, messages are represented as structs and services as traits and RPC as functions
+// We impl the trait for our struct and pass it to our server
+
+// service name for the buffer which can be executed
+service Say {
+    // function name which can be called
+    // unary request to server and unary response from server
+    rpc Send(SayRequest) returns (SayResponse); // Send is the name of the call
+
+    // // unary request to server and stream response from server
+    // rpc SendStream(SayRequest) returns (stream SayResponse);
+
+    // // stream request to server and unary response from server
+    // rpc ReceiveStream(stream SayRequest) returns (SayResponse);
+
+    // // stream request to server and stream response from server
+    // rpc BidirectionalStream(stream SayRequest) returns (stream SayResponse);
+}
+
+// arguments for the function
+message SayRequest{
+    // data type and position of data
+    string name = 1;
+    // // Numbers
+    // Assigning Numbers to fields is optional, but strongly recommended as it allows adding new fields in a backwards-compatible way.
+    // If new fields are added with previously used numbers, clients that haven't been updated will still be able to read old messages but they will drop the new fields.
+    // Old servers that receive messages with new fields will simply ignore the field.
+    // Numbers are used to recognize the field in binary data.
+    // It takes 1 byte to encode 0-15 numbers and 2 bytes for encoding 16-2047, it is wise to use 0-15 for frequently occurring data.
+
+    // // Data Types
+    // double, float, int32, int64, uint32, uint64, sint32, sint64, fixed32, fixed64, sfixed32, sfixed64, bool, string, bytes
+
+    // // Data Type Modifiers
+    // repeated, packed, map
+}
+
+// return type for the function
+message SayResponse{
+    // data type and position of data
+    string responseMessage = 1;
+}
